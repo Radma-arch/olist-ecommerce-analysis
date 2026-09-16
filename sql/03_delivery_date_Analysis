@@ -1,0 +1,84 @@
+
+-- Olist E-commerce Analysis
+-- Delivery Analysis
+
+
+-- 1. Calculate average order-processing and delivery times
+-- Only completed orders with all required timestamps are included.
+
+SELECT
+    AVG(order_approved_at - order_purchase_timestamp) AS avg_approval_time,
+    AVG(order_delivered_carrier_date - order_approved_at) AS avg_carrier_receiving_time,
+    AVG(order_delivered_customer_date - order_delivered_carrier_date) AS avg_customer_receiving_time,
+    AVG(order_delivered_customer_date - order_estimated_delivery_date) AS avg_difference_from_estimated
+FROM orders
+WHERE order_purchase_timestamp IS NOT NULL
+  AND order_approved_at IS NOT NULL
+  AND order_delivered_carrier_date IS NOT NULL
+  AND order_delivered_customer_date IS NOT NULL
+  AND order_estimated_delivery_date IS NOT NULL;
+
+
+-- 2. Calculate the overall late-delivery rate
+
+WITH late_orders AS (
+    SELECT COUNT(order_id) AS late_orders
+    FROM orders
+    WHERE order_delivered_customer_date > order_estimated_delivery_date
+),
+total_delivered_orders AS (
+    SELECT COUNT(order_id) AS total_delivered_orders
+    FROM orders
+    WHERE order_status = 'delivered'
+)
+SELECT
+    late_orders,
+    total_delivered_orders,
+    (late_orders::numeric / total_delivered_orders * 100) AS percentage
+FROM late_orders
+CROSS JOIN total_delivered_orders;
+
+
+-- 3. Compare late-delivery rates across major customer states
+-- States analyzed: São Paulo (SP), Rio de Janeiro (RJ), Minas Gerais (MG)
+
+WITH states AS (
+    SELECT
+        orders.order_id,
+        customers.customer_state,
+        orders.order_status,
+        orders.order_delivered_customer_date,
+        orders.order_estimated_delivery_date
+    FROM customers
+    JOIN orders
+      ON customers.customer_id = orders.customer_id
+    WHERE customers.customer_state IN ('SP', 'RJ', 'MG')
+      AND orders.order_status = 'delivered'
+),
+late_orders AS (
+    SELECT
+        customer_state,
+        COUNT(order_id) AS late_orders
+    FROM states
+    WHERE order_delivered_customer_date > order_estimated_delivery_date
+    GROUP BY customer_state
+),
+total_delivered_orders AS (
+    SELECT
+        customer_state,
+        COUNT(order_id) AS total_delivered_orders
+    FROM states
+    GROUP BY customer_state
+)
+SELECT
+    late_orders.customer_state,
+    late_orders,
+    total_delivered_orders,
+    (late_orders::numeric / total_delivered_orders * 100)
+        AS percentage_of_late_orders
+FROM late_orders
+JOIN total_delivered_orders
+  ON late_orders.customer_state = total_delivered_orders.customer_state
+ORDER BY percentage_of_late_orders DESC;
+```
+
