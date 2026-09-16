@@ -1,0 +1,94 @@
+
+-- Olist E-commerce Analysis
+-- Product Category Analysis
+
+
+ 1. Top 5 product categories purchased in São Paulo (SP)
+
+WITH connections AS (
+    SELECT COUNT(order_items.order_item_id) AS num_of_orders,
+           category_translation.product_category_name_english AS products_bought
+    FROM customers
+    JOIN orders
+      ON customers.customer_id = orders.customer_id
+    JOIN order_items
+      ON orders.order_id = order_items.order_id
+    JOIN products
+      ON order_items.product_id = products.product_id
+    JOIN product_category_name_translation AS category_translation
+      ON products.product_category_name = category_translation.product_category_name
+    WHERE customers.customer_state = 'SP'
+    GROUP BY category_translation.product_category_name_english
+),
+ranknum AS (
+    SELECT num_of_orders,
+           products_bought,
+           RANK() OVER (ORDER BY num_of_orders DESC) AS rank_num
+    FROM connections
+)
+SELECT num_of_orders,
+       products_bought,
+       rank_num
+FROM ranknum
+WHERE rank_num <= 5;
+
+
+-- 2. Top 5 product categories purchased in Rio de Janeiro (RJ)
+
+WITH connections AS (
+    SELECT COUNT(order_items.order_item_id) AS num_of_orders,
+           category_translation.product_category_name_english AS products_bought
+    FROM customers
+    JOIN orders
+      ON customers.customer_id = orders.customer_id
+    JOIN order_items
+      ON orders.order_id = order_items.order_id
+    JOIN products
+      ON order_items.product_id = products.product_id
+    JOIN product_category_name_translation AS category_translation
+      ON products.product_category_name = category_translation.product_category_name
+    WHERE customers.customer_state = 'RJ'
+    GROUP BY category_translation.product_category_name_english
+),
+ranknum AS (
+    SELECT num_of_orders,
+           products_bought,
+           RANK() OVER (ORDER BY num_of_orders DESC) AS rank_num
+    FROM connections
+)
+SELECT num_of_orders,
+       products_bought,
+       rank_num
+FROM ranknum
+WHERE rank_num <= 5;
+
+
+-- 3. Top 5 product categories purchased in Minas Gerais (MG)
+
+WITH connections AS (
+    SELECT COUNT(order_items.order_item_id) AS num_of_orders,
+           category_translation.product_category_name_english AS products_bought
+    FROM customers
+    JOIN orders
+      ON customers.customer_id = orders.customer_id
+    JOIN order_items
+      ON orders.order_id = order_items.order_id
+    JOIN products
+      ON order_items.product_id = products.product_id
+    JOIN product_category_name_translation AS category_translation
+      ON products.product_category_name = category_translation.product_category_name
+    WHERE customers.customer_state = 'MG'
+    GROUP BY category_translation.product_category_name_english
+),
+ranknum AS (
+    SELECT num_of_orders,
+           products_bought,
+           RANK() OVER (ORDER BY num_of_orders DESC) AS rank_num
+    FROM connections
+)
+SELECT num_of_orders,
+       products_bought,
+       rank_num
+FROM ranknum
+WHERE rank_num <= 5;
+
